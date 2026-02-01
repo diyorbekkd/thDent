@@ -6,7 +6,7 @@ export const BottomNav = () => {
     const location = useLocation();
 
     return (
-        <nav className="border-t border-slate-200 bg-white fixed bottom-0 w-full z-20 safe-area-bottom">
+        <nav className="border-t border-slate-200 bg-white fixed bottom-0 w-full z-20 pb-[env(safe-area-inset-bottom)]">
             <div className="flex justify-around items-center h-16">
                 <NavLink
                     to="/"
