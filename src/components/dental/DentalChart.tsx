@@ -1,9 +1,9 @@
-import type { ToothHistory, PatientType, ToothCondition } from '@/lib/types';
+import type { Treatment, PatientType, ToothCondition } from '@/lib/types';
 import { Tooth } from './Tooth';
 
 interface DentalChartProps {
     type: PatientType;
-    history: ToothHistory[];
+    history: Treatment[];
     onToothClick: (toothNumber: number) => void;
 }
 
@@ -33,12 +33,9 @@ export const DentalChart = ({ type, history, onToothClick }: DentalChartProps) =
     const quadrants = type === 'adult' ? ADULT_TEETH : CHILD_TEETH;
 
     const getToothStatus = (num: number): ToothCondition => {
-        // Find the *latest* entry for this tooth from history
-        // Assuming history is passed sorted descending by date or we filter
-        // In StoreContext I implemented getPatientHistory to sort by date desc.
-        const events = history.filter(h => h.toothNumber === num);
+        // History is expected to be sorted by date desc
+        const events = history.filter(h => h.tooth_number === num);
         if (events.length === 0) return 'healthy';
-        // events[0] is the latest if sorted desc
         return events[0].condition;
     };
 

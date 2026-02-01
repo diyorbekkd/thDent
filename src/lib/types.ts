@@ -1,44 +1,59 @@
+
 export type PatientType = 'adult' | 'child';
+export type Gender = 'male' | 'female';
+export type ToothCondition = 'caries' | 'filling' | 'implant' | 'crown' | 'missing' | 'extraction' | 'healthy';
 
 export interface Patient {
     id: string;
-    name: string;
+    created_at: string;
+    full_name: string;
     phone: string;
+    birth_date?: string;
+    gender?: Gender;
     type: PatientType;
-    balance: number; // Negative = Debt, Positive = Advance
+    balance: number;
+    doctor_id: string;
+}
+
+export interface Treatment {
+    id: string;
+    patient_id: string;
+    tooth_number: number;
+    condition: ToothCondition;
+    price: number;
+    created_at: string;
+    doctor_id: string;
 }
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
 
 export interface Appointment {
     id: string;
-    patientId: string;
+    patient_id: string;
+    doctor_id: string;
     date: string; // ISO string
     status: AppointmentStatus;
-    type: string; // Treatment type placeholder
     notes?: string;
+    patient?: Patient; // Joined
 }
 
-export type ToothCondition = 'caries' | 'filling' | 'implant' | 'crown' | 'missing' | 'healthy' | 'extraction';
-
-export interface ToothHistory {
+export interface Service {
     id: string;
-    patientId: string;
-    toothNumber: number; // ISO 3950
-    condition: ToothCondition;
+    name: string;
     price: number;
-    date: string; // ISO string
 }
 
 export type TransactionType = 'income' | 'expense';
-export type TransactionCategory = 'treatment' | 'salary' | 'materials' | 'other' | 'payment';
+export type TransactionCategory = 'treatment' | 'material' | 'lunch' | 'transport' | 'other';
 
 export interface Transaction {
     id: string;
-    patientId?: string; // Optional for general expenses
+    created_at: string;
     amount: number;
     type: TransactionType;
     category: TransactionCategory;
-    date: string; // ISO string
-    description?: string;
+    description: string;
+    doctor_id: string;
+    patient_id?: string;
+    patient?: Patient; // Joined
 }

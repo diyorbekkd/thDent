@@ -41,7 +41,7 @@ export const BottomNav = () => {
                     }
                 >
                     <Wallet className="w-6 h-6 mb-1" />
-                    Kassa
+                    Moliya
                 </NavLink>
             </div>
         </nav>

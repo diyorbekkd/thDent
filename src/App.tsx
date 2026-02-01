@@ -1,7 +1,6 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthProvider';
-import { AppProvider } from '@/context/AppContext';
 import { Layout } from '@/components/Layout';
 import { Dashboard } from '@/pages/Dashboard';
 import { Patients } from '@/pages/Patients';
@@ -29,24 +28,22 @@ function TelegramWrapper({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <AppProvider>
-        <BrowserRouter>
-          <TelegramWrapper>
-            <Routes>
-              <Route path="/login" element={<Login />} />
+      <BrowserRouter>
+        <TelegramWrapper>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="patients" element={<Patients />} />
-                  <Route path="patients/:id" element={<PatientProfile />} />
-                  <Route path="finance" element={<Finance />} />
-                </Route>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="patients" element={<Patients />} />
+                <Route path="patients/:id" element={<PatientProfile />} />
+                <Route path="finance" element={<Finance />} />
               </Route>
-            </Routes>
-          </TelegramWrapper>
-        </BrowserRouter>
-      </AppProvider>
+            </Route>
+          </Routes>
+        </TelegramWrapper>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

@@ -22,7 +22,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
             className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex justify-between items-center cursor-pointer active:scale-[0.98] transition-transform hover:shadow-md"
         >
             <div>
-                <h3 className="font-bold text-slate-900 text-lg">{patient.name}</h3>
+                <h3 className="font-bold text-slate-900 text-lg">{patient.full_name}</h3>
                 <p className="text-sm text-slate-500">{patient.phone}</p>
                 <span className="text-xs text-slate-400 capitalize bg-slate-50 px-2 py-0.5 rounded mt-1 inline-block">
                     {patient.type === 'adult' ? 'Kattalar' : 'Bolalar'}
