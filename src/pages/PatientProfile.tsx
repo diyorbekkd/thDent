@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useStore } from '@/hooks/useStore';
+import { useAppContext } from '@/hooks/useAppContext';
+import { useTelegram } from '@/hooks/useTelegram';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
-import { ToothChart } from '@/components/ToothChart';
+import { DentalChart } from '@/components/dental/DentalChart';
 import { ArrowLeft, Phone, Wallet, X } from 'lucide-react';
 import type { ToothCondition, PatientType } from '@/lib/types';
 import { format } from 'date-fns';
 
-export const PatientDetail = () => {
+export const PatientProfile = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { patients, getPatientHistory, getPatientAppointments, addToothTreatment, addTransaction } = useStore();
+    const { patients, getPatientHistory, getPatientAppointments, addToothTreatment, addTransaction } = useAppContext();
+    const { tg } = useTelegram();
 
     const patient = patients.find(p => p.id === id);
     const history = patient ? getPatientHistory(patient.id) : [];
@@ -27,43 +29,81 @@ export const PatientDetail = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [paymentAmount, setPaymentAmount] = useState<string>('');
 
-    if (!patient) return <div className="p-4">Bemor topilmadi</div>;
-
-    const handleSaveTreatment = () => {
+    // Handle MainButton for Treatment Modal
+    const handleSaveTreatment = useCallback(() => {
         if (selectedTooth && treatmentPrice) {
             addToothTreatment({
-                patientId: patient.id,
+                patientId: patient!.id,
                 toothNumber: selectedTooth,
                 condition: treatmentCondition,
                 price: Number(treatmentPrice),
             });
+
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert(`Muolaja saqlandi!\nBemor qarzi: ${formatCurrency(patient!.balance - Number(treatmentPrice))}`); // Show mock notification as natively as possible
+
             setSelectedTooth(null);
             setTreatmentPrice('');
         }
-    };
+    }, [selectedTooth, treatmentPrice, treatmentCondition, addToothTreatment, patient, tg]);
 
-    const handleSavePayment = () => {
+    useEffect(() => {
+        if (selectedTooth) {
+            tg.MainButton.setText(`SAQLASH (${treatmentPrice ? formatCurrency(Number(treatmentPrice)) : '0'})`);
+            tg.MainButton.show();
+            tg.MainButton.onClick(handleSaveTreatment);
+        } else if (!isPaymentModalOpen) {
+            tg.MainButton.hide();
+        }
+        return () => {
+            tg.MainButton.offClick(handleSaveTreatment);
+        };
+    }, [selectedTooth, treatmentPrice, handleSaveTreatment, tg, isPaymentModalOpen]);
+
+    // Handle MainButton for Payment Modal
+    const handleSavePayment = useCallback(() => {
         if (paymentAmount) {
             addTransaction({
-                patientId: patient.id,
+                patientId: patient!.id,
                 amount: Number(paymentAmount),
                 type: 'income',
                 category: 'payment',
                 description: 'Bemor to\'lovi'
             });
+
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert(`To'lov qabul qilindi!\nYangi balans: ${formatCurrency(patient!.balance + Number(paymentAmount))}`);
+
             setIsPaymentModalOpen(false);
             setPaymentAmount('');
         }
-    };
+    }, [paymentAmount, addTransaction, patient, tg]);
 
-    // ... rest of the component is same, but I can't leave placeholders in Overwrite tool.
-    // I must include the whole content.
-    // I'll copy pasting the return block.
+    useEffect(() => {
+        if (isPaymentModalOpen) {
+            tg.MainButton.setText("TO'LOVNI QABUL QILISH");
+            tg.MainButton.show();
+            tg.MainButton.onClick(handleSavePayment);
+        } else if (!selectedTooth) {
+            tg.MainButton.hide();
+        }
+        return () => {
+            tg.MainButton.offClick(handleSavePayment);
+        };
+    }, [isPaymentModalOpen, handleSavePayment, tg, selectedTooth]);
+
+
+    if (!patient) return <div className="p-4">Bemor topilmadi</div>;
+
+    const handleToothClick = (num: number) => {
+        tg.HapticFeedback.impactOccurred('medium');
+        setSelectedTooth(num);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-slate-50">
             {/* Header */}
-            <header className="bg-white p-4 items-center flex gap-4 shadow-sm z-10">
+            <header className="bg-white p-4 items-center flex gap-4 shadow-sm z-10 safe-area-top">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
@@ -155,10 +195,10 @@ export const PatientDetail = () => {
                             </button>
                         </div>
 
-                        <ToothChart
+                        <DentalChart
                             type={chartType}
                             history={history}
-                            onToothClick={(num) => setSelectedTooth(num)}
+                            onToothClick={handleToothClick}
                         />
 
                         <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-4">
@@ -203,8 +243,8 @@ export const PatientDetail = () => {
 
             {/* Treatment Modal */}
             {selectedTooth && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-                    <div className="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 space-y-4 animate-in slide-in-from-bottom duration-300">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 space-y-4 animate-in slide-in-from-bottom duration-300 pb-10 sm:pb-6">
                         <div className="flex justify-between items-center mb-2">
                             <h2 className="text-xl font-bold">Tish #{selectedTooth} - Muolaja</h2>
                             <button onClick={() => setSelectedTooth(null)}><X className="w-6 h-6 text-slate-400" /></button>
@@ -235,25 +275,21 @@ export const PatientDetail = () => {
                                 value={treatmentPrice}
                                 onChange={e => setTreatmentPrice(e.target.value)}
                                 className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 text-lg"
-                                placeholder="Masalan: 200000"
+                                placeholder="0"
                                 autoFocus
                             />
                         </div>
 
-                        <button
-                            onClick={handleSaveTreatment}
-                            className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 mt-2"
-                        >
-                            Saqlash
-                        </button>
+                        {/* Native MainButton replaces this, but kept as backup or visual spacer */}
+                        <div className="h-4"></div>
                     </div>
                 </div>
             )}
 
             {/* Payment Modal */}
             {isPaymentModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
                         <h2 className="text-xl font-bold mb-4">To'lov qabul qilish</h2>
 
                         <div>
@@ -263,15 +299,13 @@ export const PatientDetail = () => {
                                 value={paymentAmount}
                                 onChange={e => setPaymentAmount(e.target.value)}
                                 className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-600 text-lg"
-                                placeholder="Masalan: 500000"
+                                placeholder="0"
                                 autoFocus
                             />
                         </div>
 
-                        <div className="flex gap-3 mt-4">
-                            <button onClick={() => setIsPaymentModalOpen(false)} className="flex-1 py-3 text-slate-600 font-medium">Bekor qilish</button>
-                            <button onClick={handleSavePayment} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl shadow hover:bg-green-700">Tasdiqlash</button>
-                        </div>
+                        {/* Visual spacer for MainButton */}
+                        <div className="h-4"></div>
                     </div>
                 </div>
             )}

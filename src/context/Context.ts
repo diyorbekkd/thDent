@@ -1,7 +1,7 @@
 import { createContext } from 'react';
 import type { Patient, Appointment, ToothHistory, Transaction } from '@/lib/types';
 
-export interface StoreContextType {
+export interface AppContextType {
     patients: Patient[];
     appointments: Appointment[];
     toothHistory: ToothHistory[];
@@ -14,7 +14,6 @@ export interface StoreContextType {
     addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
     getPatientAppointments: (patientId: string) => Appointment[];
     getPatientHistory: (patientId: string) => ToothHistory[];
-    getPatientTransactions: (patientId: string) => Transaction[];
 }
 
-export const StoreContext = createContext<StoreContextType | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined);

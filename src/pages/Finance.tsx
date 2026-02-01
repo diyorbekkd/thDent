@@ -1,10 +1,10 @@
-import { useStore } from '@/hooks/useStore';
+import { useAppContext } from '@/hooks/useAppContext';
 import { isSameDay, parseISO, startOfToday } from 'date-fns';
 import { formatCurrency, cn, formatDate } from '@/lib/utils';
 import { TrendingUp, TrendingDown, PlusCircle } from 'lucide-react';
 
 export const Finance = () => {
-    const { transactions, addTransaction } = useStore();
+    const { transactions, addTransaction } = useAppContext();
 
     const today = startOfToday();
 
@@ -61,7 +61,7 @@ export const Finance = () => {
 
             <button
                 onClick={handleAddExpense}
-                className="w-full py-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl shadow-sm flex items-center justify-center space-x-2 hover:bg-slate-50"
+                className="w-full py-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl shadow-sm flex items-center justify-center space-x-2 hover:bg-slate-50 active:scale-95 transition-transform"
             >
                 <PlusCircle className="w-5 h-5 text-red-500" />
                 <span>Chiqim qo'shish</span>
@@ -74,7 +74,7 @@ export const Finance = () => {
                         <p className="text-slate-400 text-sm">Hozircha o'tkazmalar yo'q</p>
                     ) : (
                         todayTransactions.map(t => (
-                            <div key={t.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-slate-100">
+                            <div key={t.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-slate-100 shadow-sm">
                                 <div>
                                     <p className="font-medium text-slate-900 capitalize">{t.category}</p>
                                     <p className="text-xs text-slate-500">{t.description || formatDate(t.date)}</p>

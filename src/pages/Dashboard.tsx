@@ -1,4 +1,5 @@
-import { useStore } from '@/hooks/useStore';
+import { useAppContext } from '@/hooks/useAppContext';
+import { useTelegram } from '@/hooks/useTelegram';
 import { format, isSameDay, parseISO, startOfToday } from 'date-fns';
 import { uz } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -6,12 +7,12 @@ import { cn } from '@/lib/utils';
 import type { Appointment } from '@/lib/types';
 
 export const Dashboard = () => {
-    const { appointments, patients } = useStore();
+    const { appointments, patients } = useAppContext();
+    const { user } = useTelegram();
     const navigate = useNavigate();
     const today = startOfToday();
     const todayTimestamp = today.getTime();
 
-    // Removed useMemo to avoid linter conflicts with React 19 rules regarding manual memoization
     const filteredAppointments = appointments
         .filter(a => isSameDay(parseISO(a.date), todayTimestamp))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -42,8 +43,11 @@ export const Dashboard = () => {
         <div className="p-4 space-y-4">
             <header className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-800 capitalize">
-                    {format(today, 'd-MMMM, yyyy', { locale: uz })}
+                    Salom, {user?.first_name || 'Doktor'}
                 </h1>
+                <p className="text-slate-500 text-sm mb-2">
+                    {format(today, 'd-MMMM, yyyy', { locale: uz })}
+                </p>
                 <p className="text-slate-500">
                     Bugungi qabullar: <span className="font-semibold text-slate-900">{filteredAppointments.length}</span>
                 </p>
