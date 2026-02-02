@@ -9,6 +9,7 @@ import type { Appointment, Patient, AppointmentStatus } from '@/lib/types';
 import { Loader2, Plus, Calendar as CalendarIcon, User, ChevronLeft, ChevronRight, Trash2, X, CheckCircle, AlertCircle, XCircle, Clock3, Settings, BarChart2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DrawerDialog } from '@/components/ui/DrawerDialog';
+import { sendTelegramNotification } from '@/lib/api';
 
 export const Dashboard = () => {
     const { tg } = useTelegram();
@@ -120,17 +121,10 @@ export const Dashboard = () => {
                 if (profile?.telegram_chat_id) {
                     // 2. Prepare Message
                     const patientName = patients.find(p => p.id === newAppointment.patientId)?.full_name || 'Noma\'lum';
-                    const message = `📅 <b>Yangi Qabul</b>\n\n👤 <b>Bemor:</b> ${patientName}\n🕒 <b>Vaqt:</b> ${newAppointment.date} ${newAppointment.time}\n📝 <b>Izoh:</b> ${newAppointment.notes || "Yo'q"}`;
+                    const message = `📅 *Yangi Qabul*\n\n👤 *Bemor:* ${patientName}\n🕒 *Vaqt:* ${newAppointment.date} ${newAppointment.time}\n📝 *Izoh:* ${newAppointment.notes || "Yo'q"}`;
 
                     // 3. Send Notification
-                    await fetch('/api/notify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chatId: profile.telegram_chat_id,
-                            message: message
-                        })
-                    });
+                    sendTelegramNotification(profile.telegram_chat_id, message);
                 }
             } catch (e) {
                 console.error("Failed to send notification", e);

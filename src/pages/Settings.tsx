@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, LogOut, Plus, Trash2, User, Stethoscope } from 'lucide-react';
+import { ArrowLeft, LogOut, Plus, Trash2, User, Stethoscope, Database } from 'lucide-react';
 import { AddServiceDrawer } from '@/components/settings/AddServiceDrawer';
 import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Service } from '@/lib/types';
+import { seedDatabase } from '@/lib/seed';
 
 export const Settings = () => {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ export const Settings = () => {
     const [phone, setPhone] = useState('');
     const [telegramChatId, setTelegramChatId] = useState('');
     const [loadingProfile, setLoadingProfile] = useState(false);
+    const [loadingSeed, setLoadingSeed] = useState(false);
 
     // Services State
     const [services, setServices] = useState<Service[]>([]);
@@ -74,6 +76,23 @@ export const Settings = () => {
             fetchServices();
         } else {
             toast.error("Xatolik yuz berdi");
+        }
+    };
+
+    const handleSeedData = async () => {
+        if (!user) return;
+        if (!confirm("Haqiqatan ham namuna ma'lumotlarni yuklab olmoqchimisiz? Bu sizning hisobingizga yangi ma'lumotlar qo'shadi.")) return;
+
+        setLoadingSeed(true);
+        try {
+            await seedDatabase(user.id);
+            toast.success("Namuna ma'lumotlar yuklandi!");
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
+            toast.error("Xatolik yuz berdi: " + (error as Error).message);
+        } finally {
+            setLoadingSeed(false);
         }
     };
 
@@ -151,6 +170,26 @@ export const Settings = () => {
                                 className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
                             >
                                 {loadingProfile ? "Saqlanmoqda..." : "Saqlash"}
+                            </button>
+                        </div>
+
+                        {/* Demo Mode Section */}
+                        <div className="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                            <h3 className="font-bold text-slate-900 border-b pb-2">Demo Rejim</h3>
+                            <p className="text-sm text-slate-600">
+                                Ilovani test qilish uchun namuna ma'lumotlarni yuklab olishingiz mumkin.
+                            </p>
+                            <button
+                                onClick={handleSeedData}
+                                disabled={loadingSeed}
+                                className="w-full py-3 border border-blue-600 text-blue-600 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                            >
+                                {loadingSeed ? "Yuklanmoqda..." : (
+                                    <>
+                                        <Database className="w-5 h-5" />
+                                        Namuna ma'lumotlarni yuklash
+                                    </>
+                                )}
                             </button>
                         </div>
 
