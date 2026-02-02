@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, Users, Wallet } from 'lucide-react';
+import { Calendar, Users, Wallet, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const BottomNav = () => {
@@ -42,6 +42,18 @@ export const BottomNav = () => {
                 >
                     <Wallet className="w-6 h-6 mb-1" />
                     Moliya
+                </NavLink>
+
+                <NavLink
+                    to="/settings"
+                    className={({ isActive }) =>
+                        cn("flex flex-col items-center justify-center w-full h-full text-xs font-medium transition-colors",
+                            isActive ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                        )
+                    }
+                >
+                    <Settings className="w-6 h-6 mb-1" />
+                    Sozlamalar
                 </NavLink>
             </div>
         </nav>
