@@ -7,6 +7,9 @@ import { Patients } from '@/pages/Patients';
 import { PatientProfile } from '@/pages/PatientProfile';
 import { Finance } from '@/pages/Finance';
 import { Login } from '@/pages/Login';
+import { Settings } from '@/pages/Settings';
+import { Analytics } from '@/pages/Analytics';
+import { Landing } from '@/pages/Landing';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useTelegram } from '@/hooks/useTelegram';
@@ -64,14 +67,19 @@ function App() {
       <BrowserRouter>
         <TelegramWrapper>
           <Routes>
+            {/* Public */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
 
+            {/* Protected */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
+              <Route element={<Layout />}>
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="patients" element={<Patients />} />
                 <Route path="patients/:id" element={<PatientProfile />} />
                 <Route path="finance" element={<Finance />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="analytics" element={<Analytics />} />
               </Route>
             </Route>
           </Routes>

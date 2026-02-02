@@ -11,7 +11,6 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      /* enable sw on development: */
       devOptions: {
         enabled: true
       },
@@ -42,4 +41,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // 👇 YANGI QO'SHILGAN QISM (BUILD OPTIMIZATSIYA)
+  build: {
+    chunkSizeWarningLimit: 1000, // Ogohlantirish limitini 1MB ga ko'taramiz
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Katta kutubxonalarni alohida faylga ajratamiz
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge', 'date-fns']
+        }
+      }
+    }
+  }
 })

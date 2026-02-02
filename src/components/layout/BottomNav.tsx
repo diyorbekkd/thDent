@@ -9,7 +9,7 @@ export const BottomNav = () => {
         <nav className="border-t border-slate-200 bg-white fixed bottom-0 w-full z-20 pb-[env(safe-area-inset-bottom)]">
             <div className="flex justify-around items-center h-16">
                 <NavLink
-                    to="/"
+                    to="/dashboard"
                     className={({ isActive }) =>
                         cn("flex flex-col items-center justify-center w-full h-full text-xs font-medium transition-colors",
                             isActive ? "text-blue-600" : "text-slate-400 hover:text-slate-600"

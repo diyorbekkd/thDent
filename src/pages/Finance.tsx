@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useTelegram } from '@/hooks/useTelegram';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthProvider';
+import { useAuth } from '@/context/AuthContext';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { Transaction, TransactionCategory } from '@/lib/types';
 import { format, startOfToday, subDays } from 'date-fns';
-import { Loader2, TrendingUp, TrendingDown, Wallet, Plus, X } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Wallet, Plus } from 'lucide-react';
+import { DrawerDialog } from '@/components/ui/DrawerDialog';
 
 export const Finance = () => {
     const { tg } = useTelegram();
@@ -231,61 +232,59 @@ export const Finance = () => {
                 <span className="font-bold text-sm">Chiqim</span>
             </button>
 
-            {/* Add Expense Modal */}
-            {isExpenseModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-xl font-bold">Chiqim qo'shish</h2>
-                            <button onClick={() => setIsExpenseModalOpen(false)}><X className="w-6 h-6 text-slate-400" /></button>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Summa</label>
-                            <input
-                                type="number"
-                                value={expenseForm.amount}
-                                onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                                className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 text-lg"
-                                placeholder="0"
-                                autoFocus
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Kategoriya</label>
-                            <select
-                                value={expenseForm.category}
-                                onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value as TransactionCategory })}
-                                className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 bg-white"
-                            >
-                                <option value="material">Materiallar</option>
-                                <option value="transport">Transport</option>
-                                <option value="lunch">Tushlik</option>
-                                <option value="other">Boshqa</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Izoh</label>
-                            <input
-                                type="text"
-                                value={expenseForm.description}
-                                onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                                className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500"
-                                placeholder="Masalan: Taksiga"
-                            />
-                        </div>
-
-                        <button
-                            onClick={handleAddExpense}
-                            className="w-full py-3 bg-red-500 text-white font-bold rounded-xl active:scale-95 transition-transform mt-2"
-                        >
-                            Saqlash
-                        </button>
+            {/* Add Expense Drawer */}
+            <DrawerDialog
+                open={isExpenseModalOpen}
+                onOpenChange={setIsExpenseModalOpen}
+                title="Chiqim qo'shish"
+                description="Yangi xarajat kiriting"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Summa</label>
+                        <input
+                            type="number"
+                            value={expenseForm.amount}
+                            onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                            className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 text-lg"
+                            placeholder="0"
+                            autoFocus
+                        />
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Kategoriya</label>
+                        <select
+                            value={expenseForm.category}
+                            onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value as TransactionCategory })}
+                            className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 bg-white"
+                        >
+                            <option value="material">Materiallar</option>
+                            <option value="transport">Transport</option>
+                            <option value="lunch">Tushlik</option>
+                            <option value="other">Boshqa</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Izoh</label>
+                        <input
+                            type="text"
+                            value={expenseForm.description}
+                            onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                            className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500"
+                            placeholder="Masalan: Taksiga"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleAddExpense}
+                        className="w-full py-3 bg-red-500 text-white font-bold rounded-xl active:scale-95 transition-transform mt-4"
+                    >
+                        Saqlash
+                    </button>
                 </div>
-            )}
+            </DrawerDialog>
         </div>
     );
 };

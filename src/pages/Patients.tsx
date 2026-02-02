@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthProvider';
-import { Search, Plus, X, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Search, Plus, Loader2 } from 'lucide-react';
 import { PatientCard } from '@/components/patients/PatientCard';
+import { DrawerDialog } from '@/components/ui/DrawerDialog';
 import type { Patient, PatientType, Gender } from '@/lib/types';
 import { useTelegram } from '@/hooks/useTelegram';
 
@@ -106,71 +107,67 @@ export const Patients = () => {
                 )}
             </div>
 
-            {/* Add Patient Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 shadow-xl">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-xl font-bold">Yangi Bemor</h2>
-                            <button onClick={() => setIsModalOpen(false)}><X className="text-slate-400" /></button>
-                        </div>
-
-                        <form onSubmit={handleCreatePatient} className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-slate-700">F.I.SH</label>
-                                <input
-                                    required
-                                    className="w-full p-3 rounded-xl border mt-1"
-                                    placeholder="Ism Familiya"
-                                    value={newPatientName}
-                                    onChange={e => setNewPatientName(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-700">Telefon</label>
-                                <input
-                                    required
-                                    className="w-full p-3 rounded-xl border mt-1"
-                                    value={newPatientPhone}
-                                    onChange={e => setNewPatientPhone(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <label className="text-sm font-medium text-slate-700">Turi</label>
-                                    <select
-                                        className="w-full p-3 rounded-xl border mt-1 bg-white"
-                                        value={newPatientType}
-                                        onChange={e => setNewPatientType(e.target.value as PatientType)}
-                                    >
-                                        <option value="adult">Kattalar</option>
-                                        <option value="child">Bolalar</option>
-                                    </select>
-                                </div>
-                                <div className="flex-1">
-                                    <label className="text-sm font-medium text-slate-700">Jinsi</label>
-                                    <select
-                                        className="w-full p-3 rounded-xl border mt-1 bg-white"
-                                        value={newPatientGender}
-                                        onChange={e => setNewPatientGender(e.target.value as Gender)}
-                                    >
-                                        <option value="male">Erkak</option>
-                                        <option value="female">Ayol</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <button
-                                disabled={creating}
-                                type="submit"
-                                className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl mt-2 flex justify-center"
-                            >
-                                {creating ? <Loader2 className="animate-spin" /> : "Saqlash"}
-                            </button>
-                        </form>
+            {/* Add Patient Drawer */}
+            <DrawerDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                title="Yangi Bemor"
+                description="Bemor ma'lumotlarini kiriting"
+            >
+                <form onSubmit={handleCreatePatient} className="space-y-4">
+                    <div>
+                        <label className="text-sm font-medium text-slate-700">F.I.SH</label>
+                        <input
+                            required
+                            className="w-full p-3 rounded-xl border mt-1"
+                            placeholder="Ism Familiya"
+                            value={newPatientName}
+                            onChange={e => setNewPatientName(e.target.value)}
+                        />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="text-sm font-medium text-slate-700">Telefon</label>
+                        <input
+                            required
+                            className="w-full p-3 rounded-xl border mt-1"
+                            value={newPatientPhone}
+                            onChange={e => setNewPatientPhone(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex-1">
+                            <label className="text-sm font-medium text-slate-700">Turi</label>
+                            <select
+                                className="w-full p-3 rounded-xl border mt-1 bg-white"
+                                value={newPatientType}
+                                onChange={e => setNewPatientType(e.target.value as PatientType)}
+                            >
+                                <option value="adult">Kattalar</option>
+                                <option value="child">Bolalar</option>
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-sm font-medium text-slate-700">Jinsi</label>
+                            <select
+                                className="w-full p-3 rounded-xl border mt-1 bg-white"
+                                value={newPatientGender}
+                                onChange={e => setNewPatientGender(e.target.value as Gender)}
+                            >
+                                <option value="male">Erkak</option>
+                                <option value="female">Ayol</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button
+                        disabled={creating}
+                        type="submit"
+                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl mt-4 flex justify-center"
+                    >
+                        {creating ? <Loader2 className="animate-spin" /> : "Saqlash"}
+                    </button>
+                </form>
+            </DrawerDialog>
         </div>
     );
 };

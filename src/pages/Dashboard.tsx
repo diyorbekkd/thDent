@@ -1,16 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTelegram } from '@/hooks/useTelegram';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthProvider';
+import { useAuth } from '@/context/AuthContext';
 import { format, parseISO, startOfToday, addDays, isSameDay } from 'date-fns';
 import { uz } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Appointment, Patient, AppointmentStatus } from '@/lib/types';
-import { Loader2, Plus, Calendar as CalendarIcon, User, ChevronLeft, ChevronRight, Trash2, X, CheckCircle, AlertCircle, XCircle, Clock3 } from 'lucide-react';
+import { Loader2, Plus, Calendar as CalendarIcon, User, ChevronLeft, ChevronRight, Trash2, X, CheckCircle, AlertCircle, XCircle, Clock3, Settings, BarChart2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { DrawerDialog } from '@/components/ui/DrawerDialog';
 
 export const Dashboard = () => {
     const { tg } = useTelegram();
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // State
     const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
@@ -108,6 +111,31 @@ export const Dashboard = () => {
             setIsAddModalOpen(false);
             setNewAppointment({ patientId: '', date: '', time: '', notes: '', status: 'scheduled' as AppointmentStatus });
             refreshData();
+
+            // Notification Logic
+            try {
+                // 1. Get Doctor's Chat ID
+                const { data: profile } = await supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).single();
+
+                if (profile?.telegram_chat_id) {
+                    // 2. Prepare Message
+                    const patientName = patients.find(p => p.id === newAppointment.patientId)?.full_name || 'Noma\'lum';
+                    const message = `📅 <b>Yangi Qabul</b>\n\n👤 <b>Bemor:</b> ${patientName}\n🕒 <b>Vaqt:</b> ${newAppointment.date} ${newAppointment.time}\n📝 <b>Izoh:</b> ${newAppointment.notes || "Yo'q"}`;
+
+                    // 3. Send Notification
+                    await fetch('/api/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chatId: profile.telegram_chat_id,
+                            message: message
+                        })
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to send notification", e);
+            }
+
         } else {
             console.error(error);
             tg.HapticFeedback.notificationOccurred('error');
@@ -184,8 +212,16 @@ export const Dashboard = () => {
             <header className="bg-white p-4 shadow-sm z-10 space-y-4">
                 <div className="flex justify-between items-center">
                     <h1 className="text-xl font-bold text-slate-800">Jadval</h1>
-                    <div className="text-sm text-slate-500 capitalize">{format(selectedDate, 'MMMM yyyy', { locale: uz })}</div>
+                    <div className="flex gap-1">
+                        <button onClick={() => navigate('/analytics')} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full">
+                            <BarChart2 className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => navigate('/settings')} className="p-2 -mr-2 text-slate-600 hover:bg-slate-100 rounded-full">
+                            <Settings className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
+                <div className="text-sm text-slate-500 capitalize">{format(selectedDate, 'MMMM yyyy', { locale: uz })}</div>
 
                 <div className="flex items-center justify-between bg-slate-100 rounded-lg p-1">
                     <button onClick={() => handleDateChange(-1)} className="p-2 hover:bg-white rounded-md transition-colors text-slate-600">
@@ -259,113 +295,110 @@ export const Dashboard = () => {
                 <Plus className="w-8 h-8" />
             </button>
 
-            {/* Add Modal */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-xl font-bold">Qabul qo'shish</h2>
-                            <button onClick={() => setIsAddModalOpen(false)}><X className="w-6 h-6 text-slate-400" /></button>
-                        </div>
-
-                        {/* Patient Select */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Bemor</label>
-                            {newAppointment.patientId ? (
-                                <div className="flex justify-between items-center p-3 border rounded-xl bg-blue-50 border-blue-200">
-                                    <span className="font-semibold text-blue-900">
-                                        {patients.find(p => p.id === newAppointment.patientId)?.full_name}
-                                    </span>
-                                    <button onClick={() => setNewAppointment({ ...newAppointment, patientId: '' })}><X className="w-4 h-4 text-blue-500" /></button>
-                                </div>
-                            ) : (
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Bemor ismini yozing..."
-                                        className="w-full p-3 pl-10 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
-                                        value={searchTerm}
-                                        onChange={e => setSearchTerm(e.target.value)}
-                                    />
-                                    <User className="absolute left-3 top-3.5 w-5 h-5 text-slate-400" />
-                                    {searchTerm && (
-                                        <div className="absolute top-full left-0 right-0 bg-white shadow-xl border rounded-xl mt-1 max-h-48 overflow-y-auto z-50">
-                                            {filteredPatients.map(p => (
-                                                <button
-                                                    key={p.id}
-                                                    onClick={() => {
-                                                        setNewAppointment({ ...newAppointment, patientId: p.id });
-                                                        setSearchTerm('');
-                                                    }}
-                                                    className="w-full text-left p-3 hover:bg-slate-50 border-b last:border-0"
-                                                >
-                                                    <div className="font-medium">{p.full_name}</div>
-                                                    <div className="text-xs text-slate-500">{p.phone}</div>
-                                                </button>
-                                            ))}
-                                            {filteredPatients.length === 0 && <div className="p-3 text-center text-slate-400 text-sm">Topilmadi</div>}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Date & Time */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Sana</label>
-                                <input
-                                    type="date"
-                                    value={newAppointment.date}
-                                    onChange={e => setNewAppointment({ ...newAppointment, date: e.target.value })}
-                                    className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
-                                />
+            {/* Add Drawer */}
+            <DrawerDialog
+                open={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                title="Qabul qo'shish"
+                description="Yangi qabul ma'lumotlarini kiriting"
+            >
+                <div className="space-y-4">
+                    {/* Patient Select */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Bemor</label>
+                        {newAppointment.patientId ? (
+                            <div className="flex justify-between items-center p-3 border rounded-xl bg-blue-50 border-blue-200">
+                                <span className="font-semibold text-blue-900">
+                                    {patients.find(p => p.id === newAppointment.patientId)?.full_name}
+                                </span>
+                                <button onClick={() => setNewAppointment({ ...newAppointment, patientId: '' })}><X className="w-4 h-4 text-blue-500" /></button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Vaqt</label>
+                        ) : (
+                            <div className="relative">
                                 <input
-                                    type="time"
-                                    value={newAppointment.time}
-                                    onChange={e => setNewAppointment({ ...newAppointment, time: e.target.value })}
-                                    className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
+                                    type="text"
+                                    placeholder="Bemor ismini yozing..."
+                                    className="w-full p-3 pl-10 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
                                 />
+                                <User className="absolute left-3 top-3.5 w-5 h-5 text-slate-400" />
+                                {searchTerm && (
+                                    <div className="absolute top-full left-0 right-0 bg-white shadow-xl border rounded-xl mt-1 max-h-48 overflow-y-auto z-50">
+                                        {filteredPatients.map(p => (
+                                            <button
+                                                key={p.id}
+                                                onClick={() => {
+                                                    setNewAppointment({ ...newAppointment, patientId: p.id });
+                                                    setSearchTerm('');
+                                                }}
+                                                className="w-full text-left p-3 hover:bg-slate-50 border-b last:border-0"
+                                            >
+                                                <div className="font-medium">{p.full_name}</div>
+                                                <div className="text-xs text-slate-500">{p.phone}</div>
+                                            </button>
+                                        ))}
+                                        {filteredPatients.length === 0 && <div className="p-3 text-center text-slate-400 text-sm">Topilmadi</div>}
+                                    </div>
+                                )}
                             </div>
-                        </div>
+                        )}
+                    </div>
 
-                        {/* Notes */}
+                    {/* Date & Time */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Izoh</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Sana</label>
                             <input
-                                type="text"
-                                placeholder="Plomba, ko'rik..."
-                                value={newAppointment.notes}
-                                onChange={e => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                                type="date"
+                                value={newAppointment.date}
+                                onChange={e => setNewAppointment({ ...newAppointment, date: e.target.value })}
                                 className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
                             />
                         </div>
-
-                        <button
-                            onClick={handleAddAppointment}
-                            className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-transform mt-2"
-                        >
-                            Saqlash
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Edit Modal */}
-            {editingAppointment && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-xl font-bold">{editingAppointment.patient?.full_name}</h2>
-                                <p className="text-slate-500">{format(parseISO(editingAppointment.date), 'd MMMM, HH:mm', { locale: uz })}</p>
-                            </div>
-                            <button onClick={() => setEditingAppointment(null)}><X className="w-6 h-6 text-slate-400" /></button>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Vaqt</label>
+                            <input
+                                type="time"
+                                value={newAppointment.time}
+                                onChange={e => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                                className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
+                            />
                         </div>
+                    </div>
 
+                    {/* Notes */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Izoh</label>
+                        <input
+                            type="text"
+                            placeholder="Plomba, ko'rik..."
+                            value={newAppointment.notes}
+                            onChange={e => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                            className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleAddAppointment}
+                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-transform mt-4"
+                    >
+                        Saqlash
+                    </button>
+                </div>
+            </DrawerDialog>
+
+            {/* Edit Drawer */}
+            <DrawerDialog
+                open={!!editingAppointment}
+                onOpenChange={(open) => {
+                    if (!open) setEditingAppointment(null);
+                }}
+                title={editingAppointment?.patient?.full_name || 'Qabulni tahrirlash'}
+                description={editingAppointment ? format(parseISO(editingAppointment.date), 'd MMMM, HH:mm', { locale: uz }) : ''}
+            >
+                {editingAppointment && (
+                    <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700">Holatni o'zgartirish</label>
                             <div className="grid grid-cols-2 gap-2">
@@ -387,8 +420,8 @@ export const Dashboard = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </DrawerDialog>
         </div>
     );
 };
